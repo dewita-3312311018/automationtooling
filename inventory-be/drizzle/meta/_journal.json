@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1772288243413,
+      "tag": "0000_flowery_magma",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772346964164,
+      "tag": "0001_bouncy_lifeguard",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772346989941,
+      "tag": "0002_pale_blackheart",
+      "breakpoints": true
+    }
+  ]
+}
