@@ -125,7 +125,13 @@ async function getRequestsByUserId(userId: string, query: GetRequestsQuery) {
 
 async function createRequest(data: CreateRequestInput, userId: string) {
   const id = crypto.randomUUID();
-  await db.insert(requestTable).values({ ...data, id, userId });
+  const { eta, ...rest } = data;
+  await db.insert(requestTable).values({
+    ...rest,
+    id,
+    userId,
+    eta: eta ? new Date(eta as string) : null,
+  });
   const request = await getRequestById(id);
 
   if (request) {

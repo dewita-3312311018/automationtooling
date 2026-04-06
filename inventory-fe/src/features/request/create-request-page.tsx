@@ -2,9 +2,16 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Send, Package, AlertCircle, FileText, Hash } from "lucide-react";
+import { ArrowLeft, Send, Package, AlertCircle, FileText, Hash, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -21,37 +28,55 @@ import { useCreateRequest } from "./api/use-create-request";
 import { toast } from "sonner";
 import type { RequestUrgency } from "./types";
 
-const requestSchema = z.object({
-  requestType: z.enum(["existing", "new"]),
-  stockId: z.string().optional(),
-  requestedModelNumber: z.string().optional(),
-  requestedBrand: z.string().optional(),
-  requestedDescription: z.string().optional(),
-  quantity: z
-    .union([z.string(), z.number()])
-    .transform((val) => (val === "" ? "" : Number(val)))
-    .refine((val) => val !== "" && Number(val) > 0, {
-      message: "Quantity must be at least 1",
-    }),
-  urgency: z.enum(["low", "normal", "high"]),
-  note: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.requestType === "existing" && !data.stockId) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Please select a stock item",
-      path: ["stockId"],
-    });
-  }
-  if (data.requestType === "new") {
-    if (!data.requestedModelNumber) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Model number is required", path: ["requestedModelNumber"] });
+const requestSchema = z
+  .object({
+    requestType: z.enum(["existing", "new"]),
+    stockId: z.string().optional(),
+    requestedModelNumber: z.string().optional(),
+    requestedBrand: z.string().optional(),
+    requestedDescription: z.string().optional(),
+    quantity: z
+      .union([z.string(), z.number()])
+      .transform((val) => (val === "" ? "" : Number(val)))
+      .refine((val) => val !== "" && Number(val) > 0, {
+        message: "Quantity must be at least 1",
+      }),
+    urgency: z.enum(["low", "normal", "high"]),
+    note: z.string().optional(),
+    eta: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.requestType === "existing" && !data.stockId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please select a stock item",
+        path: ["stockId"],
+      });
     }
-    if (!data.requestedBrand) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Brand is required", path: ["requestedBrand"] });
+    if (data.requestType === "new") {
+      if (!data.requestedModelNumber) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Model number is required",
+          path: ["requestedModelNumber"],
+        });
+      }
+      if (!data.requestedBrand) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Brand is required",
+          path: ["requestedBrand"],
+        });
+      }
     }
-  }
-});
+    if (data.eta && data.eta.trim() !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(data.eta.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Use a valid date",
+        path: ["eta"],
+      });
+    }
+  });
 
 function CreateRequestPage() {
   const navigate = useNavigate();
@@ -68,6 +93,7 @@ function CreateRequestPage() {
       quantity: "",
       urgency: "normal",
       note: "",
+      eta: "",
     },
   });
 
@@ -78,12 +104,15 @@ function CreateRequestPage() {
     mutate(
       {
         stockId: values.requestType === "existing" ? values.stockId : undefined,
-        requestedModelNumber: values.requestType === "new" ? values.requestedModelNumber : undefined,
+        requestedModelNumber:
+          values.requestType === "new" ? values.requestedModelNumber : undefined,
         requestedBrand: values.requestType === "new" ? values.requestedBrand : undefined,
-        requestedDescription: values.requestType === "new" ? values.requestedDescription : undefined,
+        requestedDescription:
+          values.requestType === "new" ? values.requestedDescription : undefined,
         quantity: parsedQuantity,
         urgency: values.urgency as RequestUrgency,
         note: values.note || undefined,
+        eta: values.eta?.trim() ? values.eta.trim() : undefined,
       },
       {
         onSuccess: () => {
@@ -93,7 +122,7 @@ function CreateRequestPage() {
         onError: (error) => {
           toast.error(error.message || "Failed to submit request.");
         },
-      }
+      },
     );
   };
 
@@ -107,7 +136,9 @@ function CreateRequestPage() {
         </Button>
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Create Request</h2>
-          <p className="text-muted-foreground text-sm mt-1">Submit a formal request for stock procurement.</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Submit a formal request for stock procurement.
+          </p>
         </div>
       </div>
 
@@ -119,7 +150,8 @@ function CreateRequestPage() {
               Request Information
             </CardTitle>
             <CardDescription className="text-sm mt-1.5">
-              Please provide accurate details for your procurement request to ensure timely processing.
+              Please provide accurate details for your procurement request to ensure timely
+              processing.
             </CardDescription>
           </CardHeader>
 
@@ -167,7 +199,9 @@ function CreateRequestPage() {
                         disabled={isPending}
                       />
                       {form.formState.errors.requestedModelNumber && (
-                        <FieldError>{form.formState.errors.requestedModelNumber.message}</FieldError>
+                        <FieldError>
+                          {form.formState.errors.requestedModelNumber.message}
+                        </FieldError>
                       )}
                     </Field>
                     <Field>
@@ -187,7 +221,8 @@ function CreateRequestPage() {
                   </div>
                   <Field>
                     <FieldLabel htmlFor="requestedDescription" className="text-sm font-medium">
-                      Description <span className="text-muted-foreground font-normal">(Optional)</span>
+                      Description{" "}
+                      <span className="text-muted-foreground font-normal">(Optional)</span>
                     </FieldLabel>
                     <Input
                       id="requestedDescription"
@@ -201,7 +236,10 @@ function CreateRequestPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field>
-                  <FieldLabel htmlFor="quantity" className="text-sm font-medium flex items-center gap-2">
+                  <FieldLabel
+                    htmlFor="quantity"
+                    className="text-sm font-medium flex items-center gap-2"
+                  >
                     <Hash className="h-3.5 w-3.5 text-muted-foreground" />
                     Quantity
                   </FieldLabel>
@@ -220,13 +258,20 @@ function CreateRequestPage() {
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="urgency" className="text-sm font-medium flex items-center gap-2">
+                  <FieldLabel
+                    htmlFor="urgency"
+                    className="text-sm font-medium flex items-center gap-2"
+                  >
                     <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
                     Urgency Level
                   </FieldLabel>
                   <Select
                     value={form.watch("urgency")}
-                    onValueChange={(val) => form.setValue("urgency", val as "low" | "normal" | "high", { shouldValidate: true })}
+                    onValueChange={(val) =>
+                      form.setValue("urgency", val as "low" | "normal" | "high", {
+                        shouldValidate: true,
+                      })
+                    }
                     disabled={isPending}
                   >
                     <SelectTrigger id="urgency" className="w-full">
@@ -243,6 +288,24 @@ function CreateRequestPage() {
                   )}
                 </Field>
               </div>
+
+              <Field>
+                <FieldLabel htmlFor="eta" className="text-sm font-medium flex items-center gap-2">
+                  <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
+                  Expected arrival (ETA){" "}
+                  <span className="text-muted-foreground font-normal">(Optional)</span>
+                </FieldLabel>
+                <Input
+                  id="eta"
+                  type="date"
+                  className="max-w-xs"
+                  {...form.register("eta")}
+                  disabled={isPending}
+                />
+                {form.formState.errors.eta && (
+                  <FieldError>{form.formState.errors.eta.message}</FieldError>
+                )}
+              </Field>
 
               <Field>
                 <FieldLabel htmlFor="note" className="text-sm font-medium flex items-center gap-2">

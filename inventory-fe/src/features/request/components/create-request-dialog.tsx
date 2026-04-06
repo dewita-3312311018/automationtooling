@@ -1,5 +1,5 @@
 import { useState, isValidElement } from "react";
-import { Plus } from "lucide-react";
+import { Plus, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -47,6 +47,7 @@ function CreateRequestDialog({
   const [quantity, setQuantity] = useState<number | "">("");
   const [urgency, setUrgency] = useState<RequestUrgency>("normal");
   const [note, setNote] = useState("");
+  const [eta, setEta] = useState("");
 
   const { mutate, isPending } = useCreateRequest();
 
@@ -55,6 +56,7 @@ function CreateRequestDialog({
       setQuantity("");
       setUrgency("normal");
       setNote("");
+      setEta("");
     }
     setOpen(newOpen);
   };
@@ -73,6 +75,7 @@ function CreateRequestDialog({
         quantity: Number(quantity),
         urgency,
         note: note || undefined,
+        eta: eta || undefined,
       },
       {
         onSuccess: () => {
@@ -146,6 +149,20 @@ function CreateRequestDialog({
                   <SelectItem value="high">High</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="eta" className="text-right flex items-center justify-end gap-1.5">
+                <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
+                ETA
+              </Label>
+              <Input
+                id="eta"
+                type="date"
+                className="col-span-3 w-full"
+                value={eta}
+                onChange={(e) => setEta(e.target.value)}
+              />
             </div>
 
             <div className="grid grid-cols-4 items-start gap-4">

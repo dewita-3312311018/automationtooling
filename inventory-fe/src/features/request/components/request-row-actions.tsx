@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreHorizontal, PackageCheck, Send, Truck } from "lucide-react";
+import { CalendarClock, MoreHorizontal, PackageCheck, Send, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -85,9 +85,13 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
     }
 
     const status =
-      action === "APPROVE" ? "APPROVED" :
-        action === "REJECT" ? "REJECTED" :
-          action === "ORDER" ? "ORDERED" : "ARRIVED";
+      action === "APPROVE"
+        ? "APPROVED"
+        : action === "REJECT"
+          ? "REJECTED"
+          : action === "ORDER"
+            ? "ORDERED"
+            : "ARRIVED";
 
     mutate(
       {
@@ -99,16 +103,17 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
         locationId: locationId || undefined,
         ...(action === "ARRIVED" && !request.stockId
           ? {
-            existingStockId: assignType === "existing" ? existingStockId : undefined,
-            newStockDetails: assignType === "new"
-              ? {
-                uom: newStockUom,
-                type: newStockType,
-                minStockLevel: newStockMinLevel ? parseInt(newStockMinLevel) : 0,
-                projectType: undefined // or add a field if needed
-              }
-              : undefined,
-          }
+              existingStockId: assignType === "existing" ? existingStockId : undefined,
+              newStockDetails:
+                assignType === "new"
+                  ? {
+                      uom: newStockUom,
+                      type: newStockType,
+                      minStockLevel: newStockMinLevel ? parseInt(newStockMinLevel) : 0,
+                      projectType: undefined, // or add a field if needed
+                    }
+                  : undefined,
+            }
           : {}),
       },
       {
@@ -133,7 +138,7 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
   const actionDescriptions = {
     APPROVE: "Are you sure you want to approve this request? You can optionally add a note.",
     REJECT: "Please provide a reason for rejecting this request.",
-    ORDER: "Enter the Purchase Order number for this procurement.",
+    ORDER: "Enter the Purchase Order number and, if known, the expected arrival date.",
     ARRIVED: "Select the location where the items have been stored.",
   };
 
@@ -219,14 +224,28 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
 
           <div className="grid gap-4 p-4">
             {action === "ORDER" && (
-              <div className="grid gap-2">
-                <Label htmlFor="poNumber">PO Number</Label>
-                <Input
-                  id="poNumber"
-                  value={poNumber}
-                  onChange={(e) => setPoNumber(e.target.value)}
-                  placeholder="e.g. PO-12345"
-                />
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="poNumber">PO Number</Label>
+                  <Input
+                    id="poNumber"
+                    value={poNumber}
+                    onChange={(e) => setPoNumber(e.target.value)}
+                    placeholder="e.g. PO-12345"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="orderEta" className="flex items-center gap-1">
+                    Expected arrival (ETA)
+                    <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
+                  </Label>
+                  <Input
+                    id="orderEta"
+                    type="date"
+                    value={eta}
+                    onChange={(e) => setEta(e.target.value)}
+                  />
+                </div>
               </div>
             )}
 
@@ -234,10 +253,7 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label>Storage Location</Label>
-                  <LocationPicker
-                    value={locationId}
-                    onChange={setLocationId}
-                  />
+                  <LocationPicker value={locationId} onChange={setLocationId} />
                 </div>
 
                 {!request.stockId && (
@@ -245,7 +261,10 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
                     <p className="text-sm text-muted-foreground mb-2">
                       This request is for an item not yet in the system. Please map it.
                     </p>
-                    <Tabs value={assignType} onValueChange={(v) => setAssignType(v as "existing" | "new")}>
+                    <Tabs
+                      value={assignType}
+                      onValueChange={(v) => setAssignType(v as "existing" | "new")}
+                    >
                       <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="existing">Map to Existing</TabsTrigger>
                         <TabsTrigger value="new">Create New Stock</TabsTrigger>
@@ -257,12 +276,20 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
                       <TabsContent value="new" className="mt-4 space-y-4">
                         <div className="grid gap-2">
                           <Label>UOM (Unit of Measurement)</Label>
-                          <Input value={newStockUom} onChange={e => setNewStockUom(e.target.value)} />
+                          <Input
+                            value={newStockUom}
+                            onChange={(e) => setNewStockUom(e.target.value)}
+                          />
                         </div>
                         <div className="grid gap-2">
                           <Label>Type</Label>
-                          <Select value={newStockType} onValueChange={v => setNewStockType(v as "mechanical" | "electrical")}>
-                            <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                          <Select
+                            value={newStockType}
+                            onValueChange={(v) => setNewStockType(v as "mechanical" | "electrical")}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="mechanical">Mechanical</SelectItem>
                               <SelectItem value="electrical">Electrical</SelectItem>
@@ -271,7 +298,13 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
                         </div>
                         <div className="grid gap-2">
                           <Label>Min Stock Level</Label>
-                          <Input type="number" min="0" value={newStockMinLevel} onChange={e => setNewStockMinLevel(e.target.value)} placeholder="0" />
+                          <Input
+                            type="number"
+                            min="0"
+                            value={newStockMinLevel}
+                            onChange={(e) => setNewStockMinLevel(e.target.value)}
+                            placeholder="0"
+                          />
                         </div>
                       </TabsContent>
                     </Tabs>
@@ -281,9 +314,7 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
             )}
 
             <div className="grid gap-2">
-              <Label htmlFor="adminNote">
-                Admin Note
-              </Label>
+              <Label htmlFor="adminNote">Admin Note</Label>
               <Textarea
                 id="adminNote"
                 value={adminNote}

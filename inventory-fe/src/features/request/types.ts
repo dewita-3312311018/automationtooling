@@ -36,6 +36,8 @@ type CreateRequestPayload = {
   quantity: number;
   urgency?: string;
   note?: string;
+  /** ISO calendar date YYYY-MM-DD */
+  eta?: string;
 };
 
 type ReviewRequestPayload = {

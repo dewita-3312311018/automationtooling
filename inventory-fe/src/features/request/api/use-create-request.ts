@@ -21,6 +21,7 @@ function useCreateRequest() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["my-requests"] });
     },
   });
 }
