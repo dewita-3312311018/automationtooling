@@ -18,7 +18,7 @@ const LoginPage = () => {
       </div>
       <div className="bg-muted relative hidden lg:block">
         <img
-          src="/tdk-electronic.jpg"
+          src="/tdk-electronic.png"
           alt="Image"
           className="absolute inset-0 h-full w-full object-cover"
         />

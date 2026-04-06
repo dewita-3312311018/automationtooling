@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRequests } from "./api";
 import { RequestTable, requestColumns, RequestDetailSheet } from "./components";
+import { PermissionGuard } from "../rbac/components/permission-guard";
+import { Permissions } from "../rbac/utils/permission-constants";
 
 export function RequestPage() {
   const [page] = useQueryState("page", parseAsInteger.withDefault(1));
@@ -41,12 +43,14 @@ export function RequestPage() {
           <p className="text-muted-foreground">Manage and track your inventory procurement requests.</p>
         </div>
         <div className="flex items-center space-x-2">
+        <PermissionGuard permission={Permissions.requests.create}>
           <Button asChild>
             <Link to="/requests/create">
               <Plus className="mr-2 h-4 w-4" />
               Create New Request
             </Link>
           </Button>
+        </PermissionGuard>
         </div>
       </div>
 
