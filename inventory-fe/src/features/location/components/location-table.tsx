@@ -8,6 +8,7 @@ import { LocationQrDialog } from "./location-qr-dialog";
 import type { LocationInfo } from "../api/use-locations";
 
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
+import type { QueryKeys } from "@/types/data-table";
 
 interface LocationTableProps {
   data: LocationInfo[];
@@ -24,6 +25,8 @@ function LocationTable({ data, pageCount, search, onSearchChange }: LocationTabl
     data,
     columns: locationColumns,
     pageCount,
+    // Locations page uses `limit` in the URL; useDataTable defaults to `perPage`.
+    queryKeys: { perPage: "limit" } satisfies Partial<QueryKeys>,
     meta: {
       onShowQr: (location: LocationInfo) => setQrLocation(location),
     } as any,

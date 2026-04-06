@@ -27,7 +27,7 @@ function LocationsPage() {
   });
 
   const locations = data?.items || [];
-  const pageCount = data?.meta.totalPages || 0;
+  const pageCount = data?.meta.totalPages || 1;
 
   return (
     <div className="flex-1 space-y-8">

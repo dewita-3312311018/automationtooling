@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Shield, Key } from "lucide-react";
+import { useQueryState, parseAsInteger } from "nuqs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { RoleTable } from "./components/role-table";
@@ -14,8 +15,19 @@ function RBACPage() {
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [isPermissionDialogOpen, setIsPermissionDialogOpen] = useState(false);
 
-  const { data: roles, isLoading: isLoadingRoles } = useRoles();
-  const { data: permissions, isLoading: isLoadingPermissions } = usePermissions();
+  const [rolesPage] = useQueryState("rolesPage", parseAsInteger.withDefault(1));
+  const [rolesPerPage] = useQueryState("rolesPerPage", parseAsInteger.withDefault(10));
+  const [permissionsPage] = useQueryState("permissionsPage", parseAsInteger.withDefault(1));
+  const [permissionsPerPage] = useQueryState("permissionsPerPage", parseAsInteger.withDefault(10));
+
+  const { data: roles, isLoading: isLoadingRoles } = useRoles({
+    page: rolesPage,
+    limit: rolesPerPage,
+  });
+  const { data: permissions, isLoading: isLoadingPermissions } = usePermissions({
+    page: permissionsPage,
+    limit: permissionsPerPage,
+  });
 
   const isLoading = isLoadingRoles || isLoadingPermissions;
 
@@ -57,7 +69,11 @@ function RBACPage() {
               <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
             </div>
           ) : (
-            <RoleTable data={roles?.items || []} />
+            <RoleTable
+              data={roles?.items || []}
+              pageCount={roles?.meta?.totalPages || 1}
+              queryKeys={{ page: "rolesPage", perPage: "rolesPerPage" }}
+            />
           )}
         </TabsContent>
 
@@ -67,7 +83,11 @@ function RBACPage() {
               <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
             </div>
           ) : (
-            <PermissionTable data={permissions?.items || []} />
+            <PermissionTable
+              data={permissions?.items || []}
+              pageCount={permissions?.meta?.totalPages || 1}
+              queryKeys={{ page: "permissionsPage", perPage: "permissionsPerPage" }}
+            />
           )}
         </TabsContent>
       </Tabs>

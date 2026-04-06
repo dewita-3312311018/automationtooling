@@ -40,17 +40,19 @@ export function RequestPage() {
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Inventory Requests</h2>
-          <p className="text-muted-foreground">Manage and track your inventory procurement requests.</p>
+          <p className="text-muted-foreground">
+            Manage and track your inventory procurement requests.
+          </p>
         </div>
         <div className="flex items-center space-x-2">
-        <PermissionGuard permission={Permissions.requests.create}>
-          <Button asChild>
-            <Link to="/requests/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Create New Request
-            </Link>
-          </Button>
-        </PermissionGuard>
+          <PermissionGuard permission={Permissions.requests.create}>
+            <Button asChild>
+              <Link to="/requests/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Create New Request
+              </Link>
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 

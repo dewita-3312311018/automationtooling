@@ -3,11 +3,29 @@ import { $fetch } from "@/config/fetch";
 import type { ApiPaginatedResponse } from "@/types/common";
 import type { RoleInfo } from "../../staff/types";
 
-function useRoles() {
+interface UseRolesParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+function useRoles(params?: UseRolesParams) {
+  const page = params?.page ?? 1;
+  const limit = params?.limit ?? 10;
+  const search = params?.search;
+
   return useQuery({
-    queryKey: ["roles"],
+    queryKey: ["roles", { page, limit, search }],
     queryFn: async () => {
-      const { data, error } = await $fetch<ApiPaginatedResponse<RoleInfo>>("/rbac/roles");
+      const searchParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (search) searchParams.append("search", search);
+
+      const { data, error } = await $fetch<ApiPaginatedResponse<RoleInfo>>(
+        `/rbac/roles?${searchParams.toString()}`,
+      );
 
       if (error) {
         throw error;
@@ -19,3 +37,4 @@ function useRoles() {
 }
 
 export { useRoles };
+export type { UseRolesParams };

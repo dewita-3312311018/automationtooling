@@ -43,7 +43,7 @@ function StaffRowActions({ user }: StaffRowActionsProps) {
   const [newPassword, setNewPassword] = useState("");
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
 
-  const { data: roles } = useRoles();
+  const { data: roles } = useRoles({ limit: 100 });
 
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
   const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword();

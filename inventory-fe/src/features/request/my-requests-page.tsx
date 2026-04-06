@@ -1,8 +1,6 @@
 import { useQueryState, parseAsInteger, parseAsString } from "nuqs";
 import { Link } from "@tanstack/react-router";
-import {
-  Plus,
-} from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMyRequests } from "./api";
 import { RequestTable, RequestDetailSheet } from "./components";
@@ -33,21 +31,9 @@ export function MyRequestsPage() {
         onOpenChange={(open) => !open && setRequestId(null)}
       />
 
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">My Requests</h2>
-          <p className="text-muted-foreground">
-            Track the status of all your inventory requests.
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button asChild>
-            <Link to="/requests/create">
-              <Plus className="mr-2 h-4 w-4" />
-              New Request
-            </Link>
-          </Button>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">My Requests</h2>
+        <p className="text-muted-foreground">Track the status of all your inventory requests.</p>
       </div>
 
       {isLoading ? (
