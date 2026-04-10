@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { mysqlTable, varchar, timestamp, int, mysqlEnum, text, index } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
@@ -13,8 +14,8 @@ const stockTable = mysqlTable("stocks", {
   projectType: varchar("project_type", { length: 100 }),
   type: mysqlEnum("type", ["mechanical", "electrical"]),
   minStockLevel: int("min_stock_level").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
   index("model_number_idx").on(table.modelNumber),
 ]);

@@ -20,10 +20,8 @@ function PublicLocationPage() {
   const { id } = useParams({ from: "/public/location/$id" });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["public", "locations", id, "stocks"],
+    queryKey: ["public-locations", id, "stocks"],
     queryFn: async () => {
-      // Note: Even though it's a public route on the router, 
-      // the backend endpoint is /public/locations/:id/stocks
       const { data, error } = await $fetch<PublicLocationResponse>(`/public/locations/${id}/stocks`);
       if (error) throw error;
       return data.data;
@@ -49,7 +47,7 @@ function PublicLocationPage() {
         </div>
         <div className="space-y-2">
           <h1 className="text-xl font-bold">Location Not Found</h1>
-          <p className="text-sm text-muted-foreground max-w-[280px]">
+          <p className="text-sm text-muted-foreground max-w-70">
             The storage zone you scanned could not be located or may have been removed.
           </p>
         </div>

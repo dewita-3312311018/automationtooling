@@ -8,6 +8,7 @@ type AssignRolePayload = {
 
 const useAssignRole = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: AssignRolePayload) => {
       const { error } = await $fetch("/rbac/users/assign-role", {
@@ -18,7 +19,6 @@ const useAssignRole = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["staff"] });
     },
   });
 };

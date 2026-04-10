@@ -1,4 +1,4 @@
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { $fetch } from "@/config/fetch";
 import type { ApiPaginatedResponse } from "@/types/common";
 import type { StockInfo } from "../types";
@@ -24,7 +24,6 @@ const useStocks = (options?: UseStocksOptions) => {
 
       return data.data;
     },
-    placeholderData: keepPreviousData,
   });
 };
 

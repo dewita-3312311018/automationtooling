@@ -15,7 +15,7 @@ function useRoles(params?: UseRolesParams) {
   const search = params?.search;
 
   return useQuery({
-    queryKey: ["roles", { page, limit, search }],
+    queryKey: ["roles", page, limit, search],
     queryFn: async () => {
       const searchParams = new URLSearchParams({
         page: page.toString(),

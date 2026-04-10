@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { $fetch } from "@/config/fetch";
 import type { ApiPaginatedResponse } from "@/types/common";
 import type { RequestInfo, RequestStatus } from "../types";
@@ -24,7 +24,6 @@ function useMyRequests(options?: UseMyRequestsOptions) {
 
       return data.data;
     },
-    placeholderData: keepPreviousData,
   });
 }
 

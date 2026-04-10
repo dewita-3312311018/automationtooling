@@ -68,6 +68,17 @@ const stockColumns: ColumnDef<StockInfo>[] = [
     enableSorting: false,
   },
   {
+    id: "updatedAt",
+    accessorKey: "updatedAt",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Updated At" label="Last Updated" />
+    ),
+    cell: ({ row }) => {
+      return <span className="text-xs">{new Date(row.getValue<string>("updatedAt")).toLocaleDateString()}</span>;
+    },
+    enableSorting: false,
+  },
+  {
     id: "actions",
     cell: ({ row }) => <StockRowActions stock={row.original} />,
     enableSorting: false,

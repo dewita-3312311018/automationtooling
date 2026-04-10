@@ -22,7 +22,6 @@ function useUpdateStock(id: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stocks"] });
-      queryClient.invalidateQueries({ queryKey: ["stock", id] });
     },
   });
 }

@@ -39,7 +39,7 @@ const LoginForm = () => {
         window.location.href = "/stock";
       },
       onError: (err: any) => {
-        console.log('errrr', err);
+        console.log("errrr", err);
         setAuthError(err?.message || "Failed to login. Please check your credentials.");
       },
     });

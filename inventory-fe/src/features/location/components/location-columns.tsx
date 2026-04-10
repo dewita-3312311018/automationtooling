@@ -11,7 +11,6 @@ const locationColumns: ColumnDef<LocationInfo>[] = [
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" label="Name" />,
     cell: ({ row }) => <span className="font-medium text-xs">{row.getValue("name")}</span>,
-    enableSorting: true,
     enableHiding: false,
   },
   {
@@ -52,11 +51,11 @@ const locationColumns: ColumnDef<LocationInfo>[] = [
     enableSorting: false,
   },
   {
-    accessorKey: "createdAt",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" label="Created At" />,
+    accessorKey: "updatedAt",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Last Updated" label="Last Updated" />,
     cell: ({ row }) => (
       <span className="text-xs">
-        {formatDate(row.getValue("createdAt"))}
+        {formatDate(row.getValue("updatedAt"))}
       </span>
     ),
     enableSorting: false,

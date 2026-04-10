@@ -10,9 +10,11 @@ import { statusVariantMap, urgencyVariantMap } from "../types";
 const requestColumns: ColumnDef<RequestInfo>[] = [
   {
     id: "modelNumber",
-    accessorKey: "modelNumber",
+    accessorFn: (row) => row.modelNumber ?? row.requestedModelNumber ?? "—",
     header: ({ column }) => <DataTableColumnHeader column={column} label="Model Number" />,
-    cell: ({ row }) => <span className="font-medium text-xs">{row.getValue("modelNumber")}</span>,
+    cell: ({ row }) => (
+      <span className="font-medium text-xs">{String(row.getValue("modelNumber"))}</span>
+    ),
     enableSorting: false,
   },
   {
@@ -78,10 +80,10 @@ const requestColumns: ColumnDef<RequestInfo>[] = [
     enableSorting: false,
   },
   {
-    id: "createdAt",
-    accessorKey: "createdAt",
-    header: ({ column }) => <DataTableColumnHeader column={column} label="Created" />,
-    cell: ({ row }) => <span className="text-xs">{formatDate(row.getValue<string>("createdAt"))}</span>,
+    id: "updatedAt",
+    accessorKey: "updatedAt",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Last Updated" />,
+    cell: ({ row }) => <span className="text-xs">{formatDate(row.getValue<string>("updatedAt"))}</span>,
     enableSorting: false,
   },
   {

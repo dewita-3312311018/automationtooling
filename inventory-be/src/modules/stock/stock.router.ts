@@ -20,8 +20,6 @@ import { idParamSchema } from "../../lib/params";
 
 const stockRouter = new Hono<AppEnv>();
 
-
-
 stockRouter.get("/", requirePermission("stocks:read"), zValidator("query", getStocksQuerySchema), async (c) => {
   const query = c.req.valid("query");
   const stocks = await getAllStocks({

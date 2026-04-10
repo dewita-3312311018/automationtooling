@@ -15,7 +15,7 @@ function useUsers(params?: UseUsersParams) {
   const search = params?.search;
 
   return useQuery({
-    queryKey: ["users", { page, limit, search }],
+    queryKey: ["users", page, limit, search],
     queryFn: async () => {
       const searchParams = new URLSearchParams({
         page: page.toString(),

@@ -11,7 +11,6 @@ const useRole = (id: string | null) => {
   return useQuery({
     queryKey: ["roles", id],
     queryFn: async () => {
-      if (!id) return null;
       const { data, error } = await $fetch<{ data: RoleWithPermissions }>(`/rbac/roles/${id}`);
       if (error) throw error;
       return data.data;

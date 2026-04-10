@@ -7,7 +7,6 @@ function useRequest(id: string) {
   return useQuery({
     queryKey: ["requests", id],
     queryFn: async () => {
-      if (!id) return null;
       const { data, error } = await $fetch<ApiResponse<RequestInfo>>(`/requests/${id}`);
 
       if (error) {

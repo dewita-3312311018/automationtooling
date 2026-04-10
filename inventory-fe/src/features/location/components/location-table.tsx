@@ -25,7 +25,6 @@ function LocationTable({ data, pageCount, search, onSearchChange }: LocationTabl
     data,
     columns: locationColumns,
     pageCount,
-    // Locations page uses `limit` in the URL; useDataTable defaults to `perPage`.
     queryKeys: { perPage: "limit" } satisfies Partial<QueryKeys>,
     meta: {
       onShowQr: (location: LocationInfo) => setQrLocation(location),

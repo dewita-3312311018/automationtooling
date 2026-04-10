@@ -8,6 +8,7 @@ type CreateRolePayload = {
 
 const useCreateRole = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: CreateRolePayload) => {
       const { data, error } = await $fetch<{ data: any }>("/rbac/roles", {

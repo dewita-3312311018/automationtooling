@@ -8,6 +8,7 @@ type RemovePermissionPayload = {
 
 const useRemovePermission = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: RemovePermissionPayload) => {
       const { error } = await $fetch("/rbac/roles/remove-permission", {
@@ -16,8 +17,8 @@ const useRemovePermission = () => {
       });
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["roles", variables.roleId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
     },
   });
 };

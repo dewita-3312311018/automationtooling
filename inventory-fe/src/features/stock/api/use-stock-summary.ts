@@ -1,4 +1,4 @@
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { $fetch } from "@/config/fetch";
 
 export type StockSummary = {
@@ -16,6 +16,5 @@ export const useStockSummary = () => {
       if (error) throw error;
       return data.data;
     },
-    placeholderData: keepPreviousData,
   });
 };

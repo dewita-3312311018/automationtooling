@@ -41,9 +41,11 @@ function MyRequestRowActions({ request }: { request: RequestInfo }) {
 const myRequestColumns: ColumnDef<RequestInfo>[] = [
   {
     id: "modelNumber",
-    accessorKey: "modelNumber",
+    accessorFn: (row) => row.modelNumber ?? row.requestedModelNumber ?? "—",
     header: ({ column }) => <DataTableColumnHeader column={column} label="Model Number" />,
-    cell: ({ row }) => <span className="font-medium text-xs">{row.getValue("modelNumber")}</span>,
+    cell: ({ row }) => (
+      <span className="font-medium text-xs">{String(row.getValue("modelNumber"))}</span>
+    ),
     enableSorting: false,
   },
   {
@@ -101,7 +103,7 @@ const myRequestColumns: ColumnDef<RequestInfo>[] = [
     cell: ({ row }) => {
       const note = row.getValue<string | null>("adminNote");
       return note ? (
-        <span className="text-xs text-muted-foreground italic truncate max-w-[180px] block">{note}</span>
+        <span className="text-xs text-muted-foreground italic truncate max-w-45 block">{note}</span>
       ) : (
         <span className="text-muted-foreground">—</span>
       );

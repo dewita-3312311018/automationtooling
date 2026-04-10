@@ -18,7 +18,6 @@ export function useDeleteStock() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stocks"] });
-      queryClient.invalidateQueries({ queryKey: ["stock-summary"] });
     },
   });
 }

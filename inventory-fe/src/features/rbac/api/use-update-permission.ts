@@ -9,6 +9,7 @@ type UpdatePermissionPayload = {
 
 const useUpdatePermission = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdatePermissionPayload) => {
       const { data, error } = await $fetch<{ data: any }>(`/rbac/permissions/${id}`, {

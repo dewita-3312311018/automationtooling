@@ -1,4 +1,4 @@
-import { eq, and, or, like, sql } from "drizzle-orm";
+import { eq, and, or, like, sql, asc } from "drizzle-orm";
 import { db } from "../../db";
 import {
   roleTable,
@@ -67,6 +67,7 @@ async function getAllPermissions(query: GetPermissionsQuery) {
     .select()
     .from(permissionTable)
     .where(whereClause ? whereClause : undefined)
+    .orderBy(asc(permissionTable.name))
     .limit(limit)
     .offset(offset);
 

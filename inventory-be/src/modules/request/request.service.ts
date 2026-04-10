@@ -7,15 +7,17 @@ import { AppError } from "../../lib/error";
 import { logAudit } from "../audit/audit.service";
 import { createNotification } from "../notification/notification.service";
 import { calculateOffset, buildPaginatedResponse } from "../../lib/pagination";
-import { eq, and, sql, or, like } from "drizzle-orm";
+import { eq, and, sql, or, like, desc } from "drizzle-orm";
 import { getLocationById } from "../location/location.service";
 import { stockLocationTable } from "../stock/stock_location.schema";
+
+const resolvedModelNumber = sql<string | null>`COALESCE(${stockTable.modelNumber}, ${requestTable.requestedModelNumber})`;
 
 const requestSelectShape = {
   id: requestTable.id,
   userId: requestTable.userId,
   stockId: requestTable.stockId,
-  modelNumber: stockTable.modelNumber,
+  modelNumber: resolvedModelNumber,
   requestedModelNumber: requestTable.requestedModelNumber,
   requestedBrand: requestTable.requestedBrand,
   requestedDescription: requestTable.requestedDescription,
@@ -45,6 +47,8 @@ async function getAllRequests(query: GetRequestsQuery) {
         like(requestTable.adminNote, `%${search}%`),
         like(requestTable.poNumber, `%${search}%`),
         like(stockTable.modelNumber, `%${search}%`),
+        like(requestTable.requestedModelNumber, `%${search}%`),
+        like(requestTable.requestedBrand, `%${search}%`),
         like(userTable.name, `%${search}%`)
       )
     );
@@ -58,6 +62,9 @@ async function getAllRequests(query: GetRequestsQuery) {
     .leftJoin(stockTable, eq(requestTable.stockId, stockTable.id))
     .innerJoin(userTable, eq(requestTable.userId, userTable.id))
     .where(whereClause ? whereClause : undefined)
+    .orderBy(
+      desc(requestTable.updatedAt),
+    )
     .limit(limit)
     .offset(offset);
 
@@ -96,6 +103,8 @@ async function getRequestsByUserId(userId: string, query: GetRequestsQuery) {
         like(requestTable.adminNote, `%${search}%`),
         like(requestTable.poNumber, `%${search}%`),
         like(stockTable.modelNumber, `%${search}%`),
+        like(requestTable.requestedModelNumber, `%${search}%`),
+        like(requestTable.requestedBrand, `%${search}%`),
         like(userTable.name, `%${search}%`)
       )
     );
@@ -109,6 +118,9 @@ async function getRequestsByUserId(userId: string, query: GetRequestsQuery) {
     .leftJoin(stockTable, eq(requestTable.stockId, stockTable.id))
     .innerJoin(userTable, eq(requestTable.userId, userTable.id))
     .where(whereClause)
+    .orderBy(
+      desc(requestTable.updatedAt),
+    )
     .limit(limit)
     .offset(offset);
 
@@ -143,7 +155,7 @@ async function createRequest(data: CreateRequestInput, userId: string) {
       details: `Created request for stock ID ${request.stockId} with urgency ${request.urgency}`,
     });
 
-    // Notify Admins
+    // Notify to all users with admin role
     const { getUsersByRoleName } = await import("../user/user.service");
     const admins = await getUsersByRoleName("admin");
 

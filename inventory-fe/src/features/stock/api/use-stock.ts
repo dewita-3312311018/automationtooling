@@ -5,7 +5,7 @@ import type { StockInfo } from "../types";
 
 function useStock({ id, enabled = true }: { id: string; enabled?: boolean }) {
   return useQuery({
-    queryKey: ["stock", id],
+    queryKey: ["stocks", id],
     queryFn: async () => {
       const { data, error } = await $fetch<ApiResponse<StockInfo>>(`/stocks/${id}`);
 

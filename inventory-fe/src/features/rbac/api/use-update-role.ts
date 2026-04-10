@@ -9,6 +9,7 @@ type UpdateRolePayload = {
 
 const useUpdateRole = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdateRolePayload) => {
       const { data, error } = await $fetch<{ data: any }>(`/rbac/roles/${id}`, {
@@ -18,9 +19,8 @@ const useUpdateRole = () => {
       if (error) throw error;
       return data.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
-      queryClient.invalidateQueries({ queryKey: ["roles", variables.id] });
     },
   });
 };

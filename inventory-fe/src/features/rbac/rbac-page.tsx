@@ -6,14 +6,12 @@ import { Button } from "@/components/ui/button";
 import { RoleTable } from "./components/role-table";
 import { PermissionTable } from "./components/permission-table";
 import { RoleDialog } from "./components/role-dialog";
-import { PermissionDialog } from "./components/permission-dialog";
 import { useRoles } from "@/features/rbac/api/use-roles";
 import { usePermissions } from "./api/use-permissions";
 
 function RBACPage() {
   const [activeTab, setActiveTab] = useState<string>("roles");
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
-  const [isPermissionDialogOpen, setIsPermissionDialogOpen] = useState(false);
 
   const [rolesPage] = useQueryState("rolesPage", parseAsInteger.withDefault(1));
   const [rolesPerPage] = useQueryState("rolesPerPage", parseAsInteger.withDefault(10));
@@ -41,20 +39,16 @@ function RBACPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          {activeTab === "roles" ? (
+          {activeTab === "roles" && (
             <Button onClick={() => setIsRoleDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> Add Role
-            </Button>
-          ) : (
-            <Button onClick={() => setIsPermissionDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Add Permission
             </Button>
           )}
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-[400px] grid-cols-2">
+        <TabsList className="grid w-100 grid-cols-2">
           <TabsTrigger value="roles" className="flex items-center gap-2">
             <Shield className="h-4 w-4" /> Roles
           </TabsTrigger>
@@ -93,7 +87,6 @@ function RBACPage() {
       </Tabs>
 
       <RoleDialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen} />
-      <PermissionDialog open={isPermissionDialogOpen} onOpenChange={setIsPermissionDialogOpen} />
     </div>
   );
 }

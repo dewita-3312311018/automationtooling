@@ -54,7 +54,9 @@ export function RequestDetailSheet({ id, open, onOpenChange }: RequestDetailShee
                 <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg border">
                   <div>
                     <div className="text-xs text-muted-foreground mb-1">Model Number</div>
-                    <div className="text-lg font-mono">{request.modelNumber}</div>
+                    <div className="text-lg font-mono">
+                      {request.modelNumber ?? request.requestedModelNumber ?? "—"}
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-muted-foreground mb-1">Quantity</div>

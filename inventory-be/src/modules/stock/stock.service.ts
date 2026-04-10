@@ -1,4 +1,4 @@
-import { eq, lte, or, like, and, sql } from "drizzle-orm";
+import { eq, lte, or, like, and, sql, desc } from "drizzle-orm";
 import { db } from "../../db";
 import { stockTable } from "./stock.schema";
 import type { CreateStockInput, GetStocksQuery } from "./stock.types";
@@ -35,6 +35,7 @@ async function getAllStocks(query: GetStocksQuery) {
     .select()
     .from(stockTable)
     .where(whereClause ? whereClause : undefined)
+    .orderBy(desc(stockTable.updatedAt))
     .limit(limit)
     .offset(offset);
 

@@ -243,6 +243,11 @@ function StockForm({ initialData }: StockFormProps) {
                     {form.formState.errors.locations.root.message}
                   </p>
                 )}
+                {form.formState.errors.locations?.message && (
+                  <p className="text-[0.8rem] font-medium text-destructive">
+                    {form.formState.errors.locations.message}
+                  </p>
+                )}
 
                 <div className="space-y-4">
                   {fields.map((field, index) => (

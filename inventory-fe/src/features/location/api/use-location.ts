@@ -8,10 +8,8 @@ type LocationResponse = {
 
 const useLocation = (id?: string) => {
   return useQuery({
-    queryKey: ["location", id],
+    queryKey: ["locations", id],
     queryFn: async () => {
-      if (!id) return null;
-      
       const { data, error } = await $fetch<LocationResponse>(`/locations/${id}`);
 
       if (error) {

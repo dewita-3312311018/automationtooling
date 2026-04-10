@@ -3,6 +3,7 @@ import { $fetch } from "@/config/fetch";
 
 const useDeleteRole = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await $fetch<{ data: any }>(`/rbac/roles/${id}`, {

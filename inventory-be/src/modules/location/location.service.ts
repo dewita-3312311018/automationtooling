@@ -1,4 +1,4 @@
-import { eq, or, like, and, sql } from "drizzle-orm";
+import { eq, or, like, and, sql, desc } from "drizzle-orm";
 import { db } from "../../db";
 import { locationTable } from "./location.schema";
 import type { CreateLocationInput, GetLocationsQuery } from "./location.types";
@@ -25,6 +25,7 @@ async function getAllLocations(query: GetLocationsQuery) {
     .select()
     .from(locationTable)
     .where(whereClause ? whereClause : undefined)
+    .orderBy(desc(locationTable.updatedAt))
     .limit(limit)
     .offset(offset);
 

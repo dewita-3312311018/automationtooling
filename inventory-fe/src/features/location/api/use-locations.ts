@@ -1,4 +1,4 @@
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { $fetch } from "@/config/fetch";
 import type { ApiPaginatedResponse } from "@/types/common";
 
@@ -25,7 +25,6 @@ const useLocations = (options?: { page?: number; limit?: number; search?: string
 
       return data?.data;
     },
-    placeholderData: keepPreviousData,
   });
 };
 

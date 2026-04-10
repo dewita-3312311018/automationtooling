@@ -5,7 +5,7 @@ import type { StockLocation } from "../types";
 
 function useStockLocations({ id, enabled = true }: { id: string; enabled?: boolean }) {
   return useQuery({
-    queryKey: ["stockLocations", id],
+    queryKey: ["stocks", id, "locations"],
     queryFn: async () => {
       const { data, error } = await $fetch<ApiResponse<StockLocation[]>>(`/stocks/${id}/locations`);
 

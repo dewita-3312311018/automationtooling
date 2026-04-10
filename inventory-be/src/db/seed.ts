@@ -233,23 +233,31 @@ async function runSeed() {
       if (loc) newState.locations.push(loc.id);
     }
 
+    if (newState.locations.length === 0) {
+      throw new Error("Failed to create locations for seed data");
+    }
+
     // Create Stocks
     console.log("Creating 15 Stocks...");
     const sampleBrands = ["Siemens", "OMRON", "ABB", "Schneider", "Mitsubishi", "Mitsubishi", "Schneider", "ABB", "OMRON", "Siemens", "Keyence", "Festo", "SMC", "WIKA", "ifm"];
     const typeEnum = ["mechanical", "electrical"] as const;
 
     for (let i = 0; i < 15; i++) {
+      const brand = sampleBrands[i % sampleBrands.length]!;
+      const type = typeEnum[i % typeEnum.length]!;
+      const locationId = newState.locations[i % newState.locations.length]!;
+
       const stock = await createStock({
         modelNumber: `MOD-${Math.floor(Math.random() * 10000)}-${i}`,
         description: `Industrial component piece ${i}`,
-        brand: sampleBrands[i % sampleBrands.length],
+        brand,
         uom: "pcs",
         projectType: `Project ${String.fromCharCode(65 + (i % 5))}`,
-        type: typeEnum[i % 2],
+        type,
         minStockLevel: 5 + Math.floor(Math.random() * 10),
         locations: [
           {
-            locationId: newState.locations[i % newState.locations.length],
+            locationId,
             quantity: Math.floor(Math.random() * 100) + 10,
           }
         ]
@@ -257,11 +265,14 @@ async function runSeed() {
       if (stock) newState.stocks.push(stock.id);
     }
 
+    if (newState.stocks.length === 0) {
+      throw new Error("Failed to create stocks for seed data");
+    }
+
     // Create Requests
     console.log("Creating 10 Requests...");
     for (let i = 0; i < 10; i++) {
-      const stockId = newState.stocks[i % newState.stocks.length];
-      if (!stockId) continue;
+      const stockId = newState.stocks[i % newState.stocks.length]!;
 
       const isApproved = i % 2 === 0;
       const request = await createRequest({
@@ -285,12 +296,12 @@ async function runSeed() {
           adminNote: "Not enough info.",
         });
       } else if (i === 7) {
-        await reviewRequest(request!.id, {
+        await reviewRequest(request.id, {
           status: "ARRIVED",
           adminNote: "Ordered from supplier.",
           poNumber: `PO-${1000 + i}`,
           eta: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0], // 7 days from now
-          locationId: newState.locations[0],
+          locationId: newState.locations[0]!,
         });
       }
     }

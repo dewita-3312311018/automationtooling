@@ -18,7 +18,6 @@ function useAssignRole() {
       return data.data;
     },
     onSuccess: () => {
-      // Typically we invalidate users or roles to see updated state
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["roles"] });
     },

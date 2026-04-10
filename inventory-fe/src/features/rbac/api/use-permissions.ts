@@ -14,7 +14,7 @@ const usePermissions = (params?: UsePermissionsParams) => {
   const search = params?.search;
 
   return useQuery({
-    queryKey: ["permissions", { page, limit, search }],
+    queryKey: ["permissions", page, limit, search],
     queryFn: async () => {
       const searchParams = new URLSearchParams({
         page: page.toString(),
