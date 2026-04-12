@@ -5,6 +5,7 @@ import { error } from "../lib/response";
 
 async function authMiddleware(c: Context, next: Next) {
   const authHeader = c.req.header("Authorization");
+  
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return error(c, "Missing or invalid authorization header", 401);
   }

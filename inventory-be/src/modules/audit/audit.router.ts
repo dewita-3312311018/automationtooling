@@ -8,7 +8,6 @@ import { getAuditsQuerySchema } from "./audit.validators";
 
 const auditRouter = new Hono<AppEnv>();
 
-
 auditRouter.get(
   "/",
   requirePermission("audit:read"),

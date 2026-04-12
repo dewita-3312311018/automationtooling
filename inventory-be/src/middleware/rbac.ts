@@ -12,6 +12,7 @@ function requirePermission(permissionName: string | string[]) {
     }
 
     const authorized = await hasPermission(user.id, permissionName);
+    
     if (!authorized) {
       return error(context, "Forbidden. Insufficient permissions", 403);
     }

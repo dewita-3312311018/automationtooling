@@ -1,4 +1,4 @@
-import type { Context } from "hono";
+import { type Context } from "hono";
 
 function ok<T>(c: Context, data: T, status: 200 | 201 = 200) {
   return c.json({ success: true, data }, status);
