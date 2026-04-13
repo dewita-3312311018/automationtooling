@@ -4,9 +4,12 @@ type RequestStatus = "PENDING" | "APPROVED" | "REJECTED" | "ORDERED" | "ARRIVED"
 
 type RequestUrgency = "low" | "normal" | "high";
 
+type RequestType = "procurement" | "withdrawal";
+
 type RequestInfo = {
   id: string;
   userId: string;
+  type: RequestType;
   stockId: string;
   modelNumber: string | null;
   requestedModelNumber?: string | null;
@@ -29,6 +32,7 @@ type RequestInfo = {
 type RequestListResponse = ApiPaginatedResponse<RequestInfo>;
 
 type CreateRequestPayload = {
+  type?: RequestType;
   stockId?: string;
   requestedModelNumber?: string;
   requestedBrand?: string;
@@ -72,12 +76,18 @@ const urgencyVariantMap: Record<string, BadgeVariant> = {
   high: "destructive",
 };
 
-export { statusVariantMap, urgencyVariantMap };
+const typeVariantMap: Record<RequestType, BadgeVariant> = {
+  procurement: "secondary",
+  withdrawal: "warning",
+};
+
+export { statusVariantMap, urgencyVariantMap, typeVariantMap };
 
 export type {
   BadgeVariant,
   RequestStatus,
   RequestUrgency,
+  RequestType,
   RequestInfo,
   RequestListResponse,
   CreateRequestPayload,

@@ -1,0 +1,1 @@
+ALTER TABLE `requests` ADD `type` varchar(50) DEFAULT 'procurement' NOT NULL;

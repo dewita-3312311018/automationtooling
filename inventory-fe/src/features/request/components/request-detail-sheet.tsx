@@ -7,7 +7,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useRequest } from "../api";
 import { formatDate } from "@/lib/format";
-import { statusVariantMap } from "../types";
+import { statusVariantMap, typeVariantMap } from "../types";
 import { Separator } from "@/components/ui/separator";
 
 interface RequestDetailSheetProps {
@@ -33,6 +33,12 @@ export function RequestDetailSheet({ id, open, onOpenChange }: RequestDetailShee
         ) : request ? (
           <div className="space-y-6 px-4">
             <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Type</span>
+                <Badge variant={typeVariantMap[request.type] ?? "secondary"} className="capitalize">
+                  {request.type || "procurement"}
+                </Badge>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Status</span>
                 <Badge variant={statusVariantMap[request.status]} className="capitalize">

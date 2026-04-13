@@ -1,29 +1,37 @@
 # Request Module
 
 ## 1. Module Overview
-The Request module handles the internal workflow for part substitutions and resupply requests. Instead of raw inventory mutations, employees submit formal "Requests" which administrators linearly Review, Approve, or Reject. 
+The Request module handles two internal workflows:
+1. **Procurement** — Employees submit formal requests for parts/items that need to be procured (new items or more quantity of existing items). Administrators review, approve, order, and mark items as arrived.
+2. **Withdrawal** — Employees request to take existing items from inventory. Administrators approve or reject. On approval, the stock quantity is automatically decremented.
 
 ## 2. Database Schema
-Defined inside `request.schema.ts`, the schema models the lifecycle of an inventory request organically.
+Defined inside `request.schema.ts`, the schema models the lifecycle of an inventory request.
 
 - **`requestTable`**
   - **`id`** (UUID, Primary Key)
   - **`userId`** (UUID): Foreign key denoting the employee who authored the request. Cascades on user delete.
-  - **`stockId`** (UUID): Foreign key denoting exactly which catalog element is being requested from the inventory. Cascades on stock delete.
+  - **`type`** (VARCHAR 50): Request type — `"procurement"` (default) or `"withdrawal"`.
+  - **`stockId`** (UUID): Foreign key denoting exactly which catalog element is being requested from the inventory. Cascades on stock delete. Required for withdrawal requests.
+  - **`requestedModelNumber`** (VARCHAR 100): For new procurement items not yet in the system.
+  - **`requestedBrand`** (VARCHAR 100): For new procurement items not yet in the system.
+  - **`requestedDescription`** (TEXT): For new procurement items not yet in the system.
   - **`quantity`** (INT): Requested amount.
   - **`urgency`** (VARCHAR 50): Arbitrary prioritization metric. Default `"normal"`.
   - **`note`** (TEXT): Context written by the requesting employee.
-  - **`status`** (VARCHAR 50): The core state machine of the request. Defaults strictly to `"PENDING"`. Valid transitions: `"APPROVED"`, `"REJECTED"`, `"ORDERED"`, `"ARRIVED"`.
+  - **`status`** (VARCHAR 50): The core state machine of the request. Defaults strictly to `"PENDING"`. 
+    - Procurement: `PENDING` → `APPROVED` → `ORDERED` → `ARRIVED` or `PENDING` → `REJECTED`
+    - Withdrawal: `PENDING` → `APPROVED` or `PENDING` → `REJECTED`
   - **`adminNote`** (TEXT): Explicit feedback written by an Admin when reviewing a request.
-  - **`poNumber`** (VARCHAR 100): Purchase Order identifier if external ordering triggers.
-  - **`eta`** (DATE): Expected Time of Arrival.
+  - **`poNumber`** (VARCHAR 100): Purchase Order identifier if external ordering triggers (procurement only).
+  - **`eta`** (DATE): Expected Time of Arrival (procurement only).
   - **`createdAt`** / **`updatedAt`** (TIMESTAMP)
 
 ## 3. Relations to Other Modules
 - **User Module**: Binds requests to physical authors via `userId`.
-- **Stock Module**: The anchor reference `stockId` mapping to the actual part catalog. When a request transitions to `ARRIVED`, the stock's quantity is automatically incremented by the requested amount.
+- **Stock Module**: The anchor reference `stockId` mapping to the actual part catalog. For procurement requests, when a request transitions to `ARRIVED`, the stock's quantity is automatically incremented. For withdrawal requests, when `APPROVED`, stock quantity is decremented.
 - **Audit Module**: Request creation and every status transition automatically writes an immutable log inside the system ledger.
-- **Notification Module**: As statuses shift (e.g., `PENDING` → `APPROVED`), the Notification module triggers a precise application alert intended for the original `userId` broadcasting the Admin's decision.
+- **Notification Module**: As statuses shift (e.g., `PENDING` → `APPROVED`), the Notification module triggers a precise application alert intended for the original `userId` broadcasting the Admin's decision. For withdrawals, low-stock alerts are sent to admins if quantity drops below minimum.
 
 ## 4. API List with Request and Response Examples
 
@@ -38,6 +46,7 @@ Retrieves a global paginated list of all requests inside the system.
 - `page` (number, default: 1)
 - `limit` (number, default: 10)
 - `status` (string, optional): Filter strictly by status — `PENDING`, `APPROVED`, `REJECTED`, `ORDERED`, or `ARRIVED`.
+- `type` (string, optional): Filter by request type — `procurement` or `withdrawal`.
 - `search` (string, optional): Partial match across `adminNote`, `poNumber`, `stock.modelNumber`, and `user.name`.
 
 **Response Example (200 OK):**
@@ -136,18 +145,33 @@ Creates a brand new request. The system hardcodes `userId` from the JWT token �
 **Request Body:**
 | Field | Type | Rules |
 |---|---|---|
-| `stockId` | UUID string | Required |
+| `type` | string | Optional, default `"procurement"`. Either `"procurement"` or `"withdrawal"` |
+| `stockId` | UUID string | Required for withdrawal. For procurement, either `stockId` or `requestedModelNumber` + `requestedBrand` |
+| `requestedModelNumber` | string | For new procurement items only |
+| `requestedBrand` | string | For new procurement items only |
+| `requestedDescription` | string | Optional |
 | `quantity` | integer | Required |
 | `urgency` | string | Optional, default `"normal"` |
 | `note` | string | Optional |
+| `eta` | string (date) | Optional (procurement only) |
 
-**Request Example:**
+**Request Example (Procurement):**
 ```json
 {
   "stockId": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67890",
   "quantity": 5,
   "urgency": "high",
   "note": "Line 3 conveyor belt snapped, need these bearings ASAP."
+}
+```
+
+**Request Example (Withdrawal):**
+```json
+{
+  "type": "withdrawal",
+  "stockId": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67890",
+  "quantity": 3,
+  "note": "Need for maintenance task on Line 2."
 }
 ```
 
@@ -177,24 +201,37 @@ Creates a brand new request. The system hardcodes `userId` from the JWT token �
 ---
 
 ### `PUT /requests/:id/review`
-Explicitly invoked by Administrators to progress requests along the state cycle. When status transitions to `ARRIVED`, the linked stock's quantity is automatically incremented by the request's quantity, and the stock's location can be updated via `locationId`.
+Explicitly invoked by Administrators to progress requests along the state cycle.
+
+**Procurement requests:** When status transitions to `ARRIVED`, the linked stock's quantity is automatically incremented by the request's quantity, and the stock's location can be updated via `locationId`.
+
+**Withdrawal requests:** When status transitions to `APPROVED`, the linked stock's quantity is automatically decremented by the request's quantity from the specified location. Statuses `ORDERED` and `ARRIVED` are not valid for withdrawal requests.
 
 **Request Body:**
 | Field | Type | Rules |
 |---|---|---|
 | `status` | string | Required — `APPROVED`, `REJECTED`, `ORDERED`, or `ARRIVED` |
 | `adminNote` | string | Required when status is `REJECTED`, optional otherwise |
-| `poNumber` | string | Optional |
-| `eta` | string (date) | Optional |
-| `locationId` | UUID string | Optional — used when status is `ARRIVED` to update the stock's location |
+| `poNumber` | string | Optional (procurement only) |
+| `eta` | string (date) | Optional (procurement only) |
+| `locationId` | UUID string | Required when approving withdrawals. Optional for `ARRIVED` procurement to update stock location |
 
-**Request Example (Approving):**
+**Request Example (Approving Procurement):**
 ```json
 {
   "status": "APPROVED",
   "adminNote": "Sourced from local supplier.",
   "poNumber": "PO-12345",
   "eta": "2026-02-25"
+}
+```
+
+**Request Example (Approving Withdrawal):**
+```json
+{
+  "status": "APPROVED",
+  "adminNote": "Withdrawal approved for maintenance.",
+  "locationId": "e44d34a4-11b2-12c8-b8a5-d06efce2123d"
 }
 ```
 
@@ -226,11 +263,15 @@ Explicitly invoked by Administrators to progress requests along the state cycle.
 **Error Responses:**
 - `404 Not Found` — Request ID does not exist (`"Request not found"`).
 - `400 Bad Request` — Status is `REJECTED` but no `adminNote` provided (`"Rejection requires an admin note/reason"`).
+- `400 Bad Request` — Status is `ORDERED` or `ARRIVED` for a withdrawal request (`"Status 'X' is not valid for withdrawal requests"`).
+- `400 Bad Request` — Approving a withdrawal without `locationId` (`"Must specify a location when approving a withdrawal"`).
+- `400 Bad Request` — Insufficient stock for withdrawal approval (`"Insufficient stock. Available: X, Requested: Y"`).
 
 *Side effects on status change:*
 - An `UPDATE REQUEST` audit log entry is written.
 - A notification is pushed to the requester's user account.
-- If status is `ARRIVED`: stock quantity is incremented and `locationId` updated if provided, plus an `UPDATE STOCK` audit log is written.
+- If procurement status is `ARRIVED`: stock quantity is incremented and `locationId` updated if provided, plus an `UPDATE STOCK` audit log is written.
+- If withdrawal status is `APPROVED`: stock quantity is decremented at the specified location, an `UPDATE STOCK` audit log is written, and low-stock alerts are sent to admins if quantity drops below minimum.
 
 ---
 

@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Send, Package, AlertCircle, FileText, Hash, CalendarClock } from "lucide-react";
+import { ArrowLeft, Send, Package, PackageMinus, AlertCircle, FileText, Hash, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,10 +26,11 @@ import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field
 import { StockPicker } from "@/features/stock/components/stock-picker";
 import { useCreateRequest } from "./api/use-create-request";
 import { toast } from "sonner";
-import type { RequestUrgency } from "./types";
+import type { RequestUrgency, RequestType } from "./types";
 
 const requestSchema = z
   .object({
+    type: z.enum(["procurement", "withdrawal"]),
     requestType: z.enum(["existing", "new"]),
     stockId: z.string().optional(),
     requestedModelNumber: z.string().optional(),
@@ -46,6 +47,17 @@ const requestSchema = z
     eta: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    if (data.type === "withdrawal") {
+      if (!data.stockId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please select a stock item",
+          path: ["stockId"],
+        });
+      }
+      return;
+    }
+    // Procurement validation
     if (data.requestType === "existing" && !data.stockId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -85,6 +97,7 @@ function CreateRequestPage() {
   const form = useForm<z.input<typeof requestSchema>>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
+      type: "procurement",
       requestType: "existing",
       stockId: "",
       requestedModelNumber: "",
@@ -97,22 +110,26 @@ function CreateRequestPage() {
     },
   });
 
+  const formType = form.watch("type") as RequestType;
+
   const onSubmit = (values: z.input<typeof requestSchema>) => {
     // We can safely cast because the refine schema guarantees it's a number > 0 on valid submit
     const parsedQuantity = Number(values.quantity);
+    const isWithdrawal = values.type === "withdrawal";
 
     mutate(
       {
-        stockId: values.requestType === "existing" ? values.stockId : undefined,
+        type: values.type as RequestType,
+        stockId: isWithdrawal || values.requestType === "existing" ? values.stockId : undefined,
         requestedModelNumber:
-          values.requestType === "new" ? values.requestedModelNumber : undefined,
-        requestedBrand: values.requestType === "new" ? values.requestedBrand : undefined,
+          !isWithdrawal && values.requestType === "new" ? values.requestedModelNumber : undefined,
+        requestedBrand: !isWithdrawal && values.requestType === "new" ? values.requestedBrand : undefined,
         requestedDescription:
-          values.requestType === "new" ? values.requestedDescription : undefined,
+          !isWithdrawal && values.requestType === "new" ? values.requestedDescription : undefined,
         quantity: parsedQuantity,
         urgency: values.urgency as RequestUrgency,
         note: values.note || undefined,
-        eta: values.eta?.trim() ? values.eta.trim() : undefined,
+        eta: !isWithdrawal && values.eta?.trim() ? values.eta.trim() : undefined,
       },
       {
         onSuccess: () => {
@@ -137,7 +154,7 @@ function CreateRequestPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Create Request</h2>
           <p className="text-muted-foreground text-sm mt-1">
-            Submit a formal request for stock procurement.
+            Submit a formal request for stock procurement or withdrawal.
           </p>
         </div>
       </div>
@@ -146,17 +163,64 @@ function CreateRequestPage() {
         <form onSubmit={form.handleSubmit(onSubmit as any)}>
           <CardHeader className="px-8 pb-6 bg-muted/10 border-b border-border/40">
             <CardTitle className="text-xl flex items-center gap-2">
-              <Package className="h-5 w-5 text-primary" />
+              {formType === "withdrawal" ? (
+                <PackageMinus className="h-5 w-5 text-primary" />
+              ) : (
+                <Package className="h-5 w-5 text-primary" />
+              )}
               Request Information
             </CardTitle>
             <CardDescription className="text-sm mt-1.5">
-              Please provide accurate details for your procurement request to ensure timely
-              processing.
+              {formType === "withdrawal"
+                ? "Request to withdraw existing items from inventory."
+                : "Please provide accurate details for your procurement request to ensure timely processing."}
             </CardDescription>
           </CardHeader>
 
           <CardContent className="py-4">
             <FieldGroup>
+              <Field>
+                <FieldLabel className="text-sm font-medium">Request Type</FieldLabel>
+                <Select
+                  value={formType}
+                  onValueChange={(val) => {
+                    form.setValue("type", val as "procurement" | "withdrawal");
+                    form.setValue("stockId", "");
+                    form.clearErrors();
+                  }}
+                  disabled={isPending}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select request type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="procurement">
+                      Procurement — Request new or more items
+                    </SelectItem>
+                    <SelectItem value="withdrawal">
+                      Withdrawal — Take existing items from stock
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              {formType === "withdrawal" ? (
+                <div className="space-y-4">
+                  <Field>
+                    <FieldLabel htmlFor="stockId" className="text-sm font-medium flex items-center">
+                      Stock Item <span className="text-destructive ml-1">*</span>
+                    </FieldLabel>
+                    <StockPicker
+                      value={form.watch("stockId")}
+                      onChange={(val) => form.setValue("stockId", val, { shouldValidate: true })}
+                      disabled={isPending}
+                    />
+                    {form.formState.errors.stockId && (
+                      <FieldError>{form.formState.errors.stockId.message}</FieldError>
+                    )}
+                  </Field>
+                </div>
+              ) : (
               <Tabs
                 value={form.watch("requestType")}
                 onValueChange={(val: string) => {
@@ -233,6 +297,7 @@ function CreateRequestPage() {
                   </Field>
                 </TabsContent>
               </Tabs>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field>
@@ -289,6 +354,7 @@ function CreateRequestPage() {
                 </Field>
               </div>
 
+              {formType !== "withdrawal" && (
               <Field>
                 <FieldLabel htmlFor="eta" className="text-sm font-medium flex items-center gap-2">
                   <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -306,6 +372,7 @@ function CreateRequestPage() {
                   <FieldError>{form.formState.errors.eta.message}</FieldError>
                 )}
               </Field>
+              )}
 
               <Field>
                 <FieldLabel htmlFor="note" className="text-sm font-medium flex items-center gap-2">

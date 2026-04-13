@@ -6,6 +6,14 @@ import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/hooks/use-data-table";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { RequestType } from "../types";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -13,6 +21,8 @@ interface DataTableProps<TData, TValue> {
   pageCount: number;
   search?: string;
   onSearchChange?: (value: string) => void;
+  typeFilter?: RequestType | "all";
+  onTypeFilterChange?: (value: RequestType | "all") => void;
 }
 
 function RequestTable<TData, TValue>({
@@ -21,6 +31,8 @@ function RequestTable<TData, TValue>({
   pageCount,
   search = "",
   onSearchChange,
+  typeFilter,
+  onTypeFilterChange,
 }: DataTableProps<TData, TValue>) {
   const [inputValue, setInputValue] = React.useState(search);
 
@@ -53,6 +65,21 @@ function RequestTable<TData, TValue>({
             onChange={(event) => handleSearch(event.target.value)}
             className="h-8 w-40 lg:w-64"
           />
+          {onTypeFilterChange && (
+            <Select
+              value={typeFilter || "all"}
+              onValueChange={(val) => onTypeFilterChange(val as RequestType | "all")}
+            >
+              <SelectTrigger className="h-8 w-[150px]">
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="procurement">Procurement</SelectItem>
+                <SelectItem value="withdrawal">Withdrawal</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </DataTableToolbar>
       </DataTable>
     </div>
