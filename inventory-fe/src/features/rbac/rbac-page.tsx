@@ -1,0 +1,94 @@
+import { useState } from "react";
+import { Plus, Shield, Key } from "lucide-react";
+import { useQueryState, parseAsInteger } from "nuqs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { RoleTable } from "./components/role-table";
+import { PermissionTable } from "./components/permission-table";
+import { RoleDialog } from "./components/role-dialog";
+import { useRoles } from "@/features/rbac/api/use-roles";
+import { usePermissions } from "./api/use-permissions";
+
+function RBACPage() {
+  const [activeTab, setActiveTab] = useState<string>("roles");
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+
+  const [rolesPage] = useQueryState("rolesPage", parseAsInteger.withDefault(1));
+  const [rolesPerPage] = useQueryState("rolesPerPage", parseAsInteger.withDefault(10));
+  const [permissionsPage] = useQueryState("permissionsPage", parseAsInteger.withDefault(1));
+  const [permissionsPerPage] = useQueryState("permissionsPerPage", parseAsInteger.withDefault(10));
+
+  const { data: roles, isLoading: isLoadingRoles } = useRoles({
+    page: rolesPage,
+    limit: rolesPerPage,
+  });
+  const { data: permissions, isLoading: isLoadingPermissions } = usePermissions({
+    page: permissionsPage,
+    limit: permissionsPerPage,
+  });
+
+  const isLoading = isLoadingRoles || isLoadingPermissions;
+
+  return (
+    <div className="flex-1 space-y-8">
+      <div className="flex items-center justify-between space-y-2">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Access Control</h2>
+          <p className="text-muted-foreground">
+            Manage system roles and their associated permissions.
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          {activeTab === "roles" && (
+            <Button onClick={() => setIsRoleDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Add Role
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-100 grid-cols-2">
+          <TabsTrigger value="roles" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" /> Roles
+          </TabsTrigger>
+          <TabsTrigger value="permissions" className="flex items-center gap-2">
+            <Key className="h-4 w-4" /> Permissions
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="roles" className="space-y-4">
+          {isLoading ? (
+            <div className="flex h-32 items-center justify-center">
+              <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            </div>
+          ) : (
+            <RoleTable
+              data={roles?.items || []}
+              pageCount={roles?.meta?.totalPages || 1}
+              queryKeys={{ page: "rolesPage", perPage: "rolesPerPage" }}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="permissions" className="space-y-4">
+          {isLoading ? (
+            <div className="flex h-32 items-center justify-center">
+              <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            </div>
+          ) : (
+            <PermissionTable
+              data={permissions?.items || []}
+              pageCount={permissions?.meta?.totalPages || 1}
+              queryKeys={{ page: "permissionsPage", perPage: "permissionsPerPage" }}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
+
+      <RoleDialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen} />
+    </div>
+  );
+}
+
+export { RBACPage };
