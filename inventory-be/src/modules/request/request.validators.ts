@@ -4,6 +4,7 @@ import { paginationQuerySchema } from "../../lib/pagination";
 
 export const getRequestsQuerySchema = paginationQuerySchema.extend({
   status: z.enum(["PENDING", "APPROVED", "REJECTED", "ORDERED", "ARRIVED"]).optional(),
+  type: z.enum(["procurement", "withdrawal"]).optional(),
   search: z.string().optional(),
 });
 
@@ -22,12 +23,19 @@ export const createRequestPayloadSchema = insertRequestSchema
     poNumber: true,
     eta: true,
     userId: true,
+    type: true,
   })
   .extend({
+    type: z.enum(["procurement", "withdrawal"]).default("procurement"),
     eta: optionalEtaString,
   })
-  .refine((data) => data.stockId || (data.requestedModelNumber && data.requestedBrand), {
-    message: "Either select an existing stock, or provide requested model number and brand.",
+  .refine((data) => {
+    if (data.type === "withdrawal") {
+      return !!data.stockId;
+    }
+    return data.stockId || (data.requestedModelNumber && data.requestedBrand);
+  }, {
+    message: "Withdrawal requires an existing stock item. Procurement requires either an existing stock or requested model number and brand.",
   });
 
 export const reviewRequestSchema = z.object({

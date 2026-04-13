@@ -3,11 +3,25 @@ import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { RequestRowActions } from "./request-row-actions";
 import { formatDate } from "@/lib/format";
-import type { RequestInfo, RequestStatus } from "../types";
-import { statusVariantMap, urgencyVariantMap } from "../types";
+import type { RequestInfo, RequestStatus, RequestType } from "../types";
+import { statusVariantMap, urgencyVariantMap, typeVariantMap } from "../types";
 
 
 const requestColumns: ColumnDef<RequestInfo>[] = [
+  {
+    id: "type",
+    accessorKey: "type",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Type" />,
+    cell: ({ row }) => {
+      const type = (row.getValue<RequestType>("type")) || "procurement";
+      return (
+        <Badge variant={typeVariantMap[type]} className="capitalize">
+          {type}
+        </Badge>
+      );
+    },
+    enableSorting: false,
+  },
   {
     id: "modelNumber",
     accessorFn: (row) => row.modelNumber ?? row.requestedModelNumber ?? "—",

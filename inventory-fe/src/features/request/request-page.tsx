@@ -7,6 +7,7 @@ import { useRequests } from "./api";
 import { RequestTable, requestColumns, RequestDetailSheet } from "./components";
 import { PermissionGuard } from "../rbac/components/permission-guard";
 import { Permissions } from "../rbac/utils/permission-constants";
+import type { RequestType } from "./types";
 
 export function RequestPage() {
   const [page] = useQueryState("page", parseAsInteger.withDefault(1));
@@ -16,11 +17,13 @@ export function RequestPage() {
     defaultValue: "",
     throttleMs: 400,
   });
+  const [typeFilter, setTypeFilter] = useQueryState("type", parseAsString.withDefault("all"));
 
   const { data: requestResponse, isLoading } = useRequests({
     page,
     limit,
     search: search || undefined,
+    type: typeFilter !== "all" ? (typeFilter as RequestType) : undefined,
   });
 
   const currentItems = requestResponse?.items || [];
@@ -125,6 +128,8 @@ export function RequestPage() {
           pageCount={requestResponse?.meta?.totalPages || -1}
           search={search}
           onSearchChange={setSearch}
+          typeFilter={typeFilter as RequestType | "all"}
+          onTypeFilterChange={setTypeFilter}
         />
       )}
     </div>

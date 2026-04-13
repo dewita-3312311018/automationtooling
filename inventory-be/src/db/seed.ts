@@ -168,7 +168,7 @@ async function runSeed() {
         if (!isConflict(err)) throw err;
       }
 
-      if (["locations:read", "stocks:read", "requests:read", "requests:update"].includes(name)) {
+      if (["locations:read", "stocks:read", "requests:read", "requests:update", "requests:create", "requests:my-requests"].includes(name)) {
         try {
           await assignPermissionToRole(employeeRole.id, p.id);
         } catch (err: any) {
@@ -302,6 +302,37 @@ async function runSeed() {
           poNumber: `PO-${1000 + i}`,
           eta: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0], // 7 days from now
           locationId: newState.locations[0]!,
+        });
+      }
+    }
+
+    // Create Withdrawal Requests
+    console.log("Creating 3 Withdrawal Requests...");
+    for (let i = 0; i < 3; i++) {
+      const stockId = newState.stocks[i % newState.stocks.length]!;
+      // Use the same location where this stock was created
+      const stockLocationId = newState.locations[i % newState.locations.length]!;
+      const request = await createRequest({
+        type: "withdrawal",
+        stockId: stockId,
+        quantity: Math.floor(Math.random() * 3) + 1,
+        urgency: i === 0 ? "high" : "normal",
+        note: `Withdrawal for maintenance task ${i + 1}`,
+      }, employeeUser.id);
+
+      if (!request) continue;
+      newState.requests.push(request.id);
+
+      if (i === 1) {
+        await reviewRequest(request.id, {
+          status: "APPROVED",
+          adminNote: "Withdrawal approved.",
+          locationId: stockLocationId,
+        });
+      } else if (i === 2) {
+        await reviewRequest(request.id, {
+          status: "REJECTED",
+          adminNote: "Please use the items from the other batch first.",
         });
       }
     }

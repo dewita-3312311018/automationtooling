@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useMyRequests } from "./api";
 import { RequestTable, RequestDetailSheet } from "./components";
 import { myRequestColumns } from "./components/my-request-columns";
+import type { RequestType } from "./types";
 
 export function MyRequestsPage() {
   const [page] = useQueryState("page", parseAsInteger.withDefault(1));
@@ -14,11 +15,13 @@ export function MyRequestsPage() {
     defaultValue: "",
     throttleMs: 400,
   });
+  const [typeFilter, setTypeFilter] = useQueryState("type", parseAsString.withDefault("all"));
 
   const { data: requestResponse, isLoading } = useMyRequests({
     page,
     limit,
     search: search || undefined,
+    type: typeFilter !== "all" ? (typeFilter as RequestType) : undefined,
   });
 
   const currentItems = requestResponse?.items || [];
@@ -50,6 +53,8 @@ export function MyRequestsPage() {
           pageCount={requestResponse?.meta?.totalPages || -1}
           search={search}
           onSearchChange={setSearch}
+          typeFilter={typeFilter as RequestType | "all"}
+          onTypeFilterChange={setTypeFilter}
         />
       )}
     </div>

@@ -6,6 +6,7 @@ import { stockTable } from "../stock/stock.schema";
 const requestTable = mysqlTable("requests", {
   id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: varchar("user_id", { length: 36 }).references(() => userTable.id, { onDelete: "cascade" }).notNull(),
+  type: varchar("type", { length: 50 }).notNull().default("procurement"),
   stockId: varchar("stock_id", { length: 36 }).references(() => stockTable.id, { onDelete: "cascade" }), // Nullable
   requestedModelNumber: varchar("requested_model_number", { length: 100 }),
   requestedBrand: varchar("requested_brand", { length: 100 }),

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarClock, MoreHorizontal, PackageCheck, Send, Truck } from "lucide-react";
+import { CalendarClock, MoreHorizontal, PackageCheck, Send, Truck, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -73,6 +73,12 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
       return;
     }
 
+    // Withdrawal approval requires location
+    if (request.type === "withdrawal" && action === "APPROVE" && !locationId) {
+      toast.error("Please select a location to withdraw from.");
+      return;
+    }
+
     if (action === "ARRIVED" && !request.stockId) {
       if (assignType === "existing" && !existingStockId) {
         toast.error("Please select an existing stock item.");
@@ -136,7 +142,9 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
   };
 
   const actionDescriptions = {
-    APPROVE: "Are you sure you want to approve this request? You can optionally add a note.",
+    APPROVE: request.type === "withdrawal"
+      ? "Select the location to withdraw items from and optionally add a note."
+      : "Are you sure you want to approve this request? You can optionally add a note.",
     REJECT: "Please provide a reason for rejecting this request.",
     ORDER: "Enter the Purchase Order number and, if known, the expected arrival date.",
     ARRIVED: "Select the location where the items have been stored.",
@@ -167,7 +175,7 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
             </Button>
           </PermissionGuard>
         )}
-        {request.status === "APPROVED" && (
+        {request.status === "APPROVED" && request.type !== "withdrawal" && (
           <PermissionGuard permission={Permissions.requests.changeStatus}>
             <Button
               size="sm"
@@ -180,7 +188,7 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
             </Button>
           </PermissionGuard>
         )}
-        {request.status === "ORDERED" && (
+        {request.status === "ORDERED" && request.type !== "withdrawal" && (
           <PermissionGuard permission={Permissions.requests.changeStatus}>
             <Button
               size="sm"
@@ -223,6 +231,13 @@ function RequestRowActions({ request }: RequestRowActionsProps) {
           </DialogHeader>
 
           <div className="grid gap-4 p-4">
+            {action === "APPROVE" && request.type === "withdrawal" && (
+              <div className="grid gap-2">
+                <Label>Withdraw from Location <span className="text-destructive">*</span></Label>
+                <LocationPicker value={locationId} onChange={setLocationId} />
+              </div>
+            )}
+
             {action === "ORDER" && (
               <div className="grid gap-4">
                 <div className="grid gap-2">

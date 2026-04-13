@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { getRequestsQuerySchema, createRequestPayloadSchema } from "./request.validators";
 
+type RequestType = "procurement" | "withdrawal";
+
 type CreateRequestInput = z.infer<typeof createRequestPayloadSchema>;
 type GetRequestsQuery = z.infer<typeof getRequestsQuerySchema>;
 
@@ -20,4 +22,4 @@ interface ReviewRequestInput {
   };
 }
 
-export type { CreateRequestInput, GetRequestsQuery, ReviewRequestInput };
+export type { RequestType, CreateRequestInput, GetRequestsQuery, ReviewRequestInput };

@@ -16,6 +16,7 @@ const resolvedModelNumber = sql<string | null>`COALESCE(${stockTable.modelNumber
 const requestSelectShape = {
   id: requestTable.id,
   userId: requestTable.userId,
+  type: requestTable.type,
   stockId: requestTable.stockId,
   modelNumber: resolvedModelNumber,
   requestedModelNumber: requestTable.requestedModelNumber,
@@ -36,11 +37,12 @@ const requestSelectShape = {
 };
 
 async function getAllRequests(query: GetRequestsQuery) {
-  const { page, limit, status, search } = query;
+  const { page, limit, status, type, search } = query;
   const offset = calculateOffset(page, limit);
 
   const conditions = [];
   if (status) conditions.push(eq(requestTable.status, status));
+  if (type) conditions.push(eq(requestTable.type, type));
   if (search) {
     conditions.push(
       or(
@@ -90,13 +92,14 @@ async function getRequestById(id: string) {
 }
 
 async function getRequestsByUserId(userId: string, query: GetRequestsQuery) {
-  const { page, limit, status, search } = query;
+  const { page, limit, status, type, search } = query;
   const offset = calculateOffset(page, limit);
 
   const conditions = [];
   conditions.push(eq(requestTable.userId, userId));
 
   if (status) conditions.push(eq(requestTable.status, status));
+  if (type) conditions.push(eq(requestTable.type, type));
   if (search) {
     conditions.push(
       or(
@@ -138,10 +141,27 @@ async function getRequestsByUserId(userId: string, query: GetRequestsQuery) {
 async function createRequest(data: CreateRequestInput, userId: string) {
   const id = crypto.randomUUID();
   const { eta, ...rest } = data;
+
+  // Validate stock quantity for withdrawal requests
+  if (data.type === "withdrawal") {
+    if (!data.stockId) {
+      throw new AppError("Withdrawal requests require an existing stock item", 400);
+    }
+    const stockRows = await db.select().from(stockTable).where(eq(stockTable.id, data.stockId));
+    const stock = stockRows[0];
+    if (!stock) {
+      throw new AppError("Stock item not found", 404);
+    }
+    if (stock.quantity < data.quantity) {
+      throw new AppError(`Insufficient stock. Available: ${stock.quantity}, Requested: ${data.quantity}`, 400);
+    }
+  }
+
   await db.insert(requestTable).values({
     ...rest,
     id,
     userId,
+    type: data.type || "procurement",
     eta: eta ? new Date(eta as string) : null,
   });
   const request = await getRequestById(id);
@@ -179,6 +199,75 @@ async function reviewRequest(id: string, data: ReviewRequestInput) {
 
   if (data.status === "REJECTED" && !data.adminNote) {
     throw new AppError("Rejection requires an admin note/reason", 400);
+  }
+
+  // Block invalid statuses for withdrawal requests
+  if (request.type === "withdrawal" && (data.status === "ORDERED" || data.status === "ARRIVED")) {
+    throw new AppError(`Status '${data.status}' is not valid for withdrawal requests. Use APPROVED or REJECTED.`, 400);
+  }
+
+  // Handle withdrawal approval: decrement stock
+  if (request.type === "withdrawal" && data.status === "APPROVED") {
+    if (!data.locationId) {
+      throw new AppError("Must specify a location when approving a withdrawal", 400);
+    }
+    if (!request.stockId) {
+      throw new AppError("Withdrawal request has no associated stock", 400);
+    }
+
+    const stockRows = await db.select().from(stockTable).where(eq(stockTable.id, request.stockId));
+    const stock = stockRows[0];
+    if (!stock) throw new AppError("Associated stock not found", 404);
+
+    if (stock.quantity < request.quantity) {
+      throw new AppError(`Insufficient stock. Available: ${stock.quantity}, Requested: ${request.quantity}`, 400);
+    }
+
+    await db.transaction(async (tx) => {
+      const newQuantity = stock.quantity - request.quantity;
+      await tx.update(stockTable).set({ quantity: newQuantity, updatedAt: new Date() }).where(eq(stockTable.id, request.stockId!));
+
+      const locRows = await tx.select().from(stockLocationTable).where(and(eq(stockLocationTable.stockId, request.stockId!), eq(stockLocationTable.locationId, data.locationId!)));
+      const locRow = locRows[0];
+
+      if (!locRow) {
+        throw new AppError("Stock is not available at the specified location", 400);
+      }
+
+      if (locRow.quantity < request.quantity) {
+        throw new AppError(`Insufficient stock at this location. Available: ${locRow.quantity}, Requested: ${request.quantity}`, 400);
+      }
+
+      await tx.update(stockLocationTable).set({ quantity: locRow.quantity - request.quantity, updatedAt: new Date() })
+        .where(eq(stockLocationTable.id, locRow.id));
+    });
+
+    let locationName = "";
+    if (data.locationId) {
+      const location = await getLocationById(data.locationId);
+      locationName = location?.name ?? "";
+    }
+
+    await logAudit({
+      action: "UPDATE",
+      entity: "STOCK",
+      entityId: request.stockId,
+      details: `Stock decremented by ${request.quantity} (Total: ${stock.quantity - request.quantity}) due to withdrawal approval. Location: ${locationName}`,
+    });
+
+    // Trigger low-stock notification if applicable
+    const newQuantity = stock.quantity - request.quantity;
+    if (newQuantity <= stock.minStockLevel) {
+      const { getUsersByRoleName } = await import("../user/user.service");
+      const admins = await getUsersByRoleName("admin");
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          title: "Low Stock Alert",
+          message: `${stock.modelNumber} (${stock.brand}) is running low. Current quantity: ${newQuantity}, Minimum level: ${stock.minStockLevel}.`,
+        });
+      }
+    }
   }
 
   if (data.status === "ARRIVED") {

@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { $fetch } from "@/config/fetch";
 import type { ApiPaginatedResponse } from "@/types/common";
-import type { RequestInfo, RequestStatus } from "../types";
+import type { RequestInfo, RequestStatus, RequestType } from "../types";
 
 type UseRequestsOptions = {
   page?: number;
   limit?: number;
   status?: RequestStatus;
+  type?: RequestType;
   search?: string;
 };
 
