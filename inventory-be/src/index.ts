@@ -6,7 +6,6 @@ import { errorHandler, notFoundHandler } from "./middleware/error";
 import { apiRouter } from "./router";
 
 import { Scalar } from "@scalar/hono-api-reference";
-import openApiSpec from "../docs/openapi.json";
 import { cors } from "hono/cors";
 import { networkInterfaces } from "os";
 
@@ -20,14 +19,6 @@ app.use(cors({
 
 app.use(logger());
 
-app.get("/openapi.json", (c) => c.json(openApiSpec));
-
-app.get(
-  "/reference",
-  Scalar({
-    url: "/openapi.json",
-  })
-);
 
 app.route("/", apiRouter);
 
